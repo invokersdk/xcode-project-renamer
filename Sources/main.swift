@@ -85,7 +85,7 @@ class XcodeProjectRenamer: NSObject {
         
         var isDir: ObjCBool = false
 		checkFile: if fileManager.fileExists(atPath: path, isDirectory: &isDir) {
-			if isDir.boolValue && path.pathExtension == "framework" {
+			if isDir.boolValue && path.hasSuffix(".framework") {
 				break checkFile
 			}
 			
