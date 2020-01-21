@@ -107,7 +107,7 @@ class XcodeProjectRenamer: NSObject {
         
         let fileExtension = URL(fileURLWithPath: element).pathExtension
         switch fileExtension {
-        case "appiconset", "json", "png", "xcuserstate":
+        case "appiconset", "json", "png", "xcuserstate", "framework":
             return true
         default:
             return false
