@@ -84,8 +84,12 @@ class XcodeProjectRenamer: NSObject {
         print("\(Color.DarkGray)Processing: \(path)")
         
         var isDir: ObjCBool = false
-        if fileManager.fileExists(atPath: path, isDirectory: &isDir) {
-            if isDir.boolValue {
+		checkFile: if fileManager.fileExists(atPath: path, isDirectory: &isDir) {
+			if isDir.boolValue && path.pathExtension == "framework" {
+				break checkFile
+			}
+			
+			if isDir.boolValue {
                 enumeratePath(path)
             } else {
                 updateContentsOfFile(atPath: path)
