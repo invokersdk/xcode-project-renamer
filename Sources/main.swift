@@ -1,3 +1,13 @@
+#!/usr/bin/swift
+
+//
+//  main.swift
+//  XcodeProjectRenamer
+//
+//  Created by Marko Tadic on 8/1/16.
+//  Copyright © 2016 appculture. All rights reserved.
+//
+
 import Foundation
 
 class XcodeProjectRenamer: NSObject {
