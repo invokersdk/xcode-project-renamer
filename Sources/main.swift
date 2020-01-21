@@ -1,5 +1,3 @@
-#!/usr/bin/swift
-
 //
 //  main.swift
 //  XcodeProjectRenamer
