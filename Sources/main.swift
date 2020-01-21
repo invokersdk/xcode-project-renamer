@@ -1,5 +1,3 @@
-#!/usr/bin/swift
-
 //
 //  main.swift
 //  XcodeProjectRenamer
@@ -57,7 +55,7 @@ class XcodeProjectRenamer: NSObject {
         }
         
         print("\n\(Color.Green)------------------------------------------")
-        print("\(Color.Green)Xcode Project Rename Finished!")
+		print("\(Color.Green)Xcode Project Rename Finished! Processed \(self.processedPaths.count) files and directories.")
         print("\(Color.Green)------------------------------------------\n")
     }
     
@@ -71,31 +69,38 @@ class XcodeProjectRenamer: NSObject {
     }
     
     private func enumeratePath(_ path: String) {
-		let enumerator = fileManager.enumerator(at: URL(fileURLWithPath: path), includingPropertiesForKeys: nil, options: .skipsPackageDescendants, errorHandler: nil)
+		let enumerator = fileManager.enumerator(atPath: path)
         while let element = enumerator?.nextObject() as? String {
-			var isDir: ObjCBool = false
-			if fileManager.fileExists(atPath: element, isDirectory: &isDir) && isDir.boolValue && element.hasSuffix(".framework") {
-				enumerator?.skipDescendants()
-				print("\(Color.Yellow)Skipping: \(element)\n")
-			} else {
-				if !processedPaths.contains(element) && !shouldSkip(element) {
-					processPath(element)
-				}
+			if self.shouldSkip(element) { continue }
+			
+			let fullPath = path + "/\(element)"
+			if !processedPaths.contains(fullPath) {
+				processPath(fullPath)
 			}
         }
+		
+		let resourceKeys = [URLResourceKey.isDirectoryKey]
+		let directoryEnumerator = self.fileManager.enumerator(at: URL(fileURLWithPath: path), includingPropertiesForKeys: resourceKeys, options: .skipsHiddenFiles)!
+		 
+		for case let fileURL as URL in directoryEnumerator {
+			guard let resourceValues = try? fileURL.resourceValues(forKeys: Set(resourceKeys)) else { continue }
+				
+			if resourceValues.isDirectory == true {
+				self.renameItem(atPath: fileURL.path)
+				processedPaths.insert(path)
+			}
+		}
     }
     
     private func processPath(_ path: String) {
         
         var isDir: ObjCBool = false
+		print("Processing: \(path)")
 		if fileManager.fileExists(atPath: path, isDirectory: &isDir) && !isDir.boolValue {
-			print("Processing: \(path)")
-			
             updateContentsOfFile(atPath: path)
-            renameItem(atPath: path)
+			renameItem(atPath: path)
+			processedPaths.insert(path)
         }
-        
-        processedPaths.insert(path)
     }
     
     private func shouldSkip(_ element: String) -> Bool {
@@ -125,7 +130,7 @@ class XcodeProjectRenamer: NSObject {
                 print("\(Color.Blue)-- Updated: \(path)")
             }
         } catch {
-            print("\(Color.Red)Error while updating file: \(error.localizedDescription)\n")
+            print("\(Color.Red)Error while updating file: \(error.localizedDescription)")
         }
     }
     
