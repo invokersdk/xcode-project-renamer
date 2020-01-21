@@ -1,13 +1,3 @@
-#!/usr/bin/swift
-
-//
-//  main.swift
-//  XcodeProjectRenamer
-//
-//  Created by Marko Tadic on 8/1/16.
-//  Copyright © 2016 appculture. All rights reserved.
-//
-
 import Foundation
 
 class XcodeProjectRenamer: NSObject {
@@ -29,7 +19,7 @@ class XcodeProjectRenamer: NSObject {
     // MARK: - Properties
     
     let fileManager = FileManager.default
-    var processedPaths = [String]()
+    var processedPaths = Set<String>()
     
     let oldName: String
     let newName: String
@@ -71,33 +61,31 @@ class XcodeProjectRenamer: NSObject {
     }
     
     private func enumeratePath(_ path: String) {
-        let enumerator = fileManager.enumerator(atPath: path)
+		let enumerator = fileManager.enumerator(at: URL(fileURLWithPath: path), includingPropertiesForKeys: nil, options: .skipsPackageDescendants, errorHandler: nil)
         while let element = enumerator?.nextObject() as? String {
-            let itemPath = path.appending("/\(element)")
-            if !processedPaths.contains(itemPath) && !shouldSkip(element) {
-                processPath(itemPath)
-            }
+			var isDir: ObjCBool = false
+			if fileManager.fileExists(atPath: element, isDirectory: &isDir) && isDir.boolValue && element.hasSuffix(".framework") {
+				enumerator?.skipDescendants()
+				print("\(Color.Yellow)Skipping: \(element)\n")
+			} else {
+				if !processedPaths.contains(element) && !shouldSkip(element) {
+					processPath(element)
+				}
+			}
         }
     }
     
     private func processPath(_ path: String) {
-        print("\(Color.DarkGray)Processing: \(path)")
         
         var isDir: ObjCBool = false
-		checkFile: if fileManager.fileExists(atPath: path, isDirectory: &isDir) {
-			if isDir.boolValue && path.hasSuffix(".framework") {
-				break checkFile
-			}
+		if fileManager.fileExists(atPath: path, isDirectory: &isDir) && !isDir.boolValue {
+			print("Processing: \(path)")
 			
-			if isDir.boolValue {
-                enumeratePath(path)
-            } else {
-                updateContentsOfFile(atPath: path)
-            }
+            updateContentsOfFile(atPath: path)
             renameItem(atPath: path)
         }
         
-        processedPaths.append(path)
+        processedPaths.insert(path)
     }
     
     private func shouldSkip(_ element: String) -> Bool {
